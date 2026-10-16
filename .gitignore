@@ -8,3 +8,18 @@
 .TemporaryItems
 .DocumentRevisions-V100
 Icon\r\r
+
+# secrets & local env — never commit
+.env
+.env.*
+!.env.example
+
+# deps / build
+node_modules/
+dist/
+.netlify/
+coverage/
+playwright-report/
+test-results/
+screenshots/
+*.log
