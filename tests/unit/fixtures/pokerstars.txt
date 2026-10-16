@@ -1,0 +1,43 @@
+PokerStars Hand #250000000001: Tournament #3000000001, $1.00+$0.10 USD Hold'em No Limit - Level I (10/20) - 2025/03/01 20:15:00 ET
+Table '3000000001 1' 6-max Seat #3 is the button
+Seat 1: Alice (1500 in chips)
+Seat 2: Hero (1500 in chips)
+Seat 3: Bob (1500 in chips)
+Seat 4: Carol (1500 in chips)
+Carol: posts small blind 10
+Alice: posts big blind 20
+*** HOLE CARDS ***
+Dealt to Hero [Ah Kd]
+Hero: raises 40 to 60
+Bob: folds
+Carol: folds
+Alice: calls 40
+*** FLOP *** [Ac 7d 2s]
+Alice: checks
+Hero: bets 80
+Alice: folds
+Uncalled bet (80) returned to Hero
+Hero collected 120 from pot
+Hero: doesn't show hand
+*** SUMMARY ***
+Total pot 120 | Rake 0
+Seat 2: Hero collected (120)
+
+PokerStars Hand #250000000002: Tournament #3000000001, $1.00+$0.10 USD Hold'em No Limit - Level I (10/20) - 2025/03/01 20:17:00 ET
+Table '3000000001 1' 6-max Seat #4 is the button
+Seat 1: Alice (1520 in chips)
+Seat 2: Hero (1560 in chips)
+Seat 3: Bob (1500 in chips)
+Seat 4: Carol (1460 in chips)
+Alice: posts small blind 10
+Hero: posts big blind 20
+*** HOLE CARDS ***
+Dealt to Hero [7c 2d]
+Bob: folds
+Carol: raises 40 to 60
+Alice: folds
+Hero: folds
+Uncalled bet (40) returned to Carol
+Carol collected 50 from pot
+*** SUMMARY ***
+Total pot 50 | Rake 0

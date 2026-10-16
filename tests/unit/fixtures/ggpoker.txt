@@ -1,0 +1,21 @@
+Poker Hand #TM900000001: Tournament #1000001, Hold'em No Limit - Level1(50/100) - 2025/03/02 19:00:00
+Table '1' 3-max Seat #1 is the button
+Seat 1: Villain (5000 in chips)
+Seat 2: Hero (5000 in chips)
+Seat 3: Fish (5000 in chips)
+Hero: posts small blind 50
+Fish: posts big blind 100
+*** HOLE CARDS ***
+Dealt to Hero [Qs Qh]
+Villain: raises 200 to 300
+Hero: raises 900 to 1200
+Fish: folds
+Villain: calls 900
+*** FLOP *** [2c 5d 9h]
+Hero: bets 1500
+Villain: folds
+Uncalled bet (1500) returned to Hero
+Hero collected 2500 from pot
+*** SUMMARY ***
+Total pot 2500 | Rake 0
+Seat 2: Hero collected (2500)
