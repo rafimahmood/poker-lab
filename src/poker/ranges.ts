@@ -46,6 +46,18 @@ export const RANGE_SPEC: Record<string, string> = {
 export const RANGES: Record<string, Set<string>> = {};
 for (const k of Object.keys(RANGE_SPEC)) RANGES[k] = expandRange(RANGE_SPEC[k]);
 
+export const SEAT_TIPS: Record<string, string> = {
+  UTG: 'Everyone else is still to act, so someone will often have a big hand. Raise only strong hands and fold the rest without a second thought.',
+  'UTG+1': 'Still very early. Add the next-best pairs and aces, nothing fancy.',
+  'UTG+2': 'Early-middle seat. Small pairs and good suited hands start to become raises.',
+  LJ: 'Middle position. All suited aces become raises, plus the best suited connectors.',
+  HJ: 'Getting later. Suited connectors down to 76s and more offsuit broadways.',
+  CO: 'Only the button and blinds are left. Open wide and try to steal the blinds.',
+  BTN: 'The best seat: you act last after the flop in every hand. Raise almost half your hands.',
+  SB: "Only the big blind is left, but you'll be out of position after the flop. Raise or fold; don't just complete.",
+  BB: "Nobody opens from the big blind. If it's folded to you, you win the blinds. Your job here is defending against raises.",
+};
+
 export const SEAT_SIZE: Record<number, string> = {
   8: 'Raise to 2.5 BB.', 7: 'Raise to 2.5 BB.', 6: 'Raise to 2.3–2.5 BB.', 5: 'Raise to 2.2–2.5 BB.',
   4: 'Raise to 2.2 BB.', 3: 'Raise to 2–2.2 BB.', 2: 'Raise to 2–2.2 BB.',
