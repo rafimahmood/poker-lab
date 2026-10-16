@@ -1,0 +1,642 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Poker Lab</title>
+<meta name="description" content="An AI poker coach for Texas Hold'em tournament players: preflop ranges, practice hands, hand-history review, lessons, equity and ICM tools.">
+<meta name="theme-color" content="#0d6a49">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230d6a49'/%3E%3Ctext x='16' y='23' font-size='20' text-anchor='middle' fill='white'%3E%E2%99%A0%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="intro">
+      <span class="suits" aria-hidden="true">♠<span class="r">♥</span>♣<span class="r">♦</span></span>
+      <h1>Poker Lab</h1>
+      <p class="muted">Odds, game theory and tournament maths, drilled until they're automatic at the table.</p>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <a href="#practice" data-group="play" role="tab">Play</a>
+    <a href="#ranges" data-group="study" role="tab">Study</a>
+    <a href="#stars" data-group="mine" role="tab">My poker</a>
+    <a href="#equity" data-group="tools" role="tab">Tools</a>
+    <a href="#coach" data-group="coach" role="tab">Coach</a>
+  </nav>
+  <nav class="subtabs" id="subtabs" aria-label="Pages"></nav>
+
+  <!-- OPENING RANGES -->
+  <section class="panel" id="p-ranges" hidden>
+    <div class="intro">
+      <h2>Preflop ranges</h2>
+      <p class="muted">Which hands to play before the flop, by seat. Choose the situation, then tap your seat.</p>
+    </div>
+    <div class="row" role="group" aria-label="Situation" id="rg-modes">
+      <button class="small" data-rgm="open">Folded to you</button>
+      <button class="small" data-rgm="vsopen">Facing a raise (2-bet)</button>
+      <button class="small" data-rgm="vs3b">Facing a 3-bet</button>
+      <button class="small" data-rgm="allin">Facing an all-in</button>
+    </div>
+    <div class="grid2">
+      <div class="box" style="align-content:start">
+        <div class="row" style="justify-content:space-between;align-items:center">
+          <h3>Your seat</h3>
+          <div class="row" role="group" aria-label="Players at the table" style="gap:4px"><span class="label" style="align-self:center">Players</span><button class="small" data-rgn="9">9</button><button class="small" data-rgn="8">8</button><button class="small" data-rgn="7">7</button><button class="small" data-rgn="6">6</button><button class="small" data-rgn="5">5</button><button class="small" data-rgn="4">4</button><button class="small" data-rgn="3">3</button><button class="small" data-rgn="2">2 · heads-up</button></div>
+        </div>
+        <div class="ptable" id="rg-table"><div class="felt"><span id="rg-felt">Folded to you</span></div></div>
+        <div class="field" id="rg-raiserbox" hidden>
+          <span class="label" id="rg-raiserlabel">Who raised?</span>
+          <div class="row" id="rg-raisers"></div>
+        </div>
+        <div class="field" id="rg-stackbox" hidden>
+          <span class="label">How big is the all-in? (smaller of the two stacks)</span>
+          <div class="row" id="rg-stacks"></div>
+        </div>
+        <div class="verdict" id="rg-tip"></div>
+      </div>
+      <div class="box" style="align-content:start">
+        <div class="row" style="justify-content:space-between;align-items:baseline">
+          <h3 id="rg-title">UTG</h3>
+          <span class="mono" id="rg-pct"></span>
+        </div>
+        <div class="row" style="gap:14px;font-size:13px" id="rg-legend"></div>
+        <div class="heat rgrid" id="rg-grid"></div>
+        <div id="rg-list" style="display:grid;gap:4px;font-size:13px"></div>
+        <p class="note" id="rg-size"></p>
+      </div>
+    </div>
+    <div class="box">
+      <h3>When the chart applies</h3>
+      <ul class="plain" id="rg-notes"></ul>
+    </div>
+    <div class="grid2">
+      <div class="box" style="align-content:start">
+        <div class="row" style="justify-content:space-between;align-items:center"><h3 id="rgd-title">Raise or fold?</h3><span class="mono muted" id="rgd-score"></span></div>
+        <div class="row" style="gap:14px;align-items:center"><div class="cards" id="rgd-cards"></div><div><b id="rgd-pos"></b><div class="note" id="rgd-players"></div></div></div>
+        <p id="rgd-spot">Everyone before you has folded.</p>
+        <div class="row"><button class="primary" id="rgd-raise">Raise</button><button id="rgd-call">Call (limp)</button><button id="rgd-fold">Fold</button><button class="ghost" id="rgd-next">Next hand</button></div>
+        <div id="rgd-out"></div>
+      </div>
+      <div class="box" style="align-content:start">
+        <h3>Your hands vs the chart</h3>
+        <div id="rg-mine"><p class="note">Import PokerStars hands to see how your real decisions compare.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LIVE SESSION -->
+  <section class="panel" id="p-live" hidden>
+    <div class="intro">
+      <h2>Live session</h2>
+      <p class="muted">Record a live game hand by hand. Use it between hands, not during them: most card rooms don't allow phones in a hand.</p>
+    </div>
+    <div class="box">
+      <div class="row" style="justify-content:space-between;align-items:center">
+        <h3>Your sessions</h3>
+        <div class="row"><button class="small primary" id="lvs-newhu">New heads-up game</button><button class="small primary" id="lvs-newt">New tournament</button></div>
+      </div>
+      <div id="lvs-list"></div>
+      <span id="lvs-msg" role="status" aria-live="polite" class="note"></span>
+    </div>
+    <div class="row" role="group" aria-label="Game type">
+      <button class="small" data-lvm="hu">Heads-up cash game</button>
+      <button class="small" data-lvm="tour">Tournament table</button>
+    </div>
+    <div id="lt-wrap" hidden style="display:grid;gap:16px">
+      <form class="box" id="lt-setup">
+        <h3>New tournament</h3>
+        <div class="row">
+          <div class="field"><label class="label" for="lt-name">Tournament</label><input id="lt-name" placeholder="e.g. Monday £50 freezeout"></div>
+          <div class="field" style="flex:0 1 110px"><label class="label" for="lt-players">Players</label><input type="number" id="lt-players" min="2" max="10" value="9" required></div>
+        </div>
+        <div class="row">
+          <div class="field" style="flex:0 1 110px"><label class="label" for="lt-myseat">Your seat</label><input type="number" id="lt-myseat" min="1" max="10" value="5" required></div>
+          <div class="field" style="flex:0 1 130px"><label class="label" for="lt-btnseat">Button starts at seat</label><input type="number" id="lt-btnseat" min="1" max="10" value="1" required></div>
+          <div class="field"><label class="label" for="lt-stack">Starting stack (chips)</label><input type="number" id="lt-stack" min="1" value="20000" required></div>
+        </div>
+        <div class="row">
+          <div class="field"><label class="label" for="lt-sb">Small blind</label><input type="number" id="lt-sb" min="1" value="100" required></div>
+          <div class="field"><label class="label" for="lt-bb">Big blind</label><input type="number" id="lt-bb" min="1" value="200" required></div>
+          <div class="field"><label class="label" for="lt-ante">Ante (total)</label><input type="number" id="lt-ante" min="0" value="0"></div>
+          <div class="field"><label class="label" for="lt-buyin">Buy-in (£)</label><input type="number" id="lt-buyin" min="0" step="0.01" value="30"></div>
+        </div>
+        <p class="note">You can name the other players and knock them out as the tournament goes on. Seats are numbered clockwise.</p>
+        <div class="row"><button class="primary" type="submit">Start tournament</button><span class="note" id="lt-setupmsg"></span></div>
+      </form>
+      <div id="lt-play" hidden style="display:grid;gap:16px">
+        <div class="grid2 prgrid">
+          <div class="box" style="align-content:start">
+            <div class="row" style="justify-content:space-between;align-items:baseline"><h3 id="lt-title">Hand 1</h3><span class="mono muted" id="lt-left"></span></div>
+            <div class="ptable pktable" id="lt-table"><div class="felt"><div class="pmid"><div class="pm-pot mono" id="lt-felt"></div><div class="cards pm-board" id="lt-midboard"></div><div class="pm-total mono note" id="lt-midnote"></div></div></div></div>
+            <div id="lt-seatpanel" class="verdict" hidden></div>
+            <div class="row" style="justify-content:space-between;align-items:center"><p class="note" style="margin:0">Tap a player to knock them out, rename them or move the button.</p><div class="row" role="group" aria-label="Table view" style="gap:4px"><button class="small" data-ltv="btn">Button stays still</button><button class="small" data-ltv="me">I stay still</button></div></div>
+            <div class="row" style="align-items:end">
+              <div class="field" style="flex:0 1 160px"><label class="label" for="lt-cards">Your cards</label><input class="mono" id="lt-cards" placeholder="e.g. Ah Kd" autocomplete="off"></div>
+              <div class="field" style="flex:1 1 200px"><label class="label" for="lt-board">Board</label><input class="mono" id="lt-board" placeholder="e.g. Qh 7c 2d 9s" autocomplete="off"></div>
+            </div>
+            <div class="field"><span class="label">What you did preflop</span><div class="row" id="lt-acts"></div></div>
+            <div class="field"><span class="label">Result</span><div class="row" id="lt-res"></div></div>
+            <div class="row">
+              <div class="field" style="flex:0 1 170px"><label class="label" for="lt-after">Your stack after</label><input type="number" id="lt-after" min="0"></div>
+              <div class="field"><label class="label" for="lt-note">Note (optional)</label><input id="lt-note" placeholder="e.g. 3-bet shoved 18 BB with AJs" autocomplete="off"></div>
+            </div>
+            <div class="row"><button class="primary" id="lt-next">Next hand</button><span id="lt-msg" role="status" aria-live="polite" class="note"></span></div>
+          </div>
+          <div class="box" style="align-content:start" id="lt-coach">
+            <div class="row" style="justify-content:space-between;align-items:center"><h3>Coach</h3><label class="row" style="gap:8px;align-items:center;cursor:pointer"><input type="checkbox" id="lt-coachon" style="width:auto"> On</label></div>
+            <p class="note" style="margin:0">Training mode for games where everyone at the table has agreed to it. Never use it online or in a card room.</p>
+            <div class="stats">
+              <div class="stat"><span class="label">Your position</span><span class="v" id="lt-pos">–</span></div>
+              <div class="stat"><span class="label">Your stack</span><span class="v" id="lt-mystack">–</span><span class="note" id="lt-mybb"></span></div>
+              <div class="stat"><span class="label">Blinds</span><span class="v" id="lt-blinds" style="font-size:20px">–</span><span class="note" id="lt-bbin"></span></div>
+            </div>
+            <div id="lt-coachbody" style="display:grid;gap:10px">
+              <div class="field"><span class="label">Before you act</span><div class="row" id="lt-sit"></div></div>
+              <div class="row" id="lt-sitx" style="align-items:end"></div>
+              <div id="lt-preout"></div>
+              <details id="lt-postbox"><summary><b>After the flop</b> <span class="note">enter the board on the left</span></summary>
+                <div style="display:grid;gap:10px;padding-top:10px">
+                  <div class="field"><span class="label">Opponents left</span><div class="row" id="lt-opps"></div></div>
+                  <div class="row" style="align-items:end">
+                    <div class="field" style="flex:0 1 150px"><label class="label" for="lt-pot">Pot (chips)</label><input type="number" id="lt-pot" min="0"></div>
+                    <div class="field" style="flex:0 1 150px"><label class="label" for="lt-tocall">To call (0 if checked to you)</label><input type="number" id="lt-tocall" min="0" value="0"></div>
+                  </div>
+                  <div id="lt-postout"></div>
+                </div>
+              </details>
+            </div>
+          </div>
+        </div>
+        <div class="box">
+          <div class="row" style="justify-content:space-between;align-items:center"><h3>Tournament so far</h3><span class="mono" id="lt-sum"></span></div>
+          <div class="row" style="align-items:end">
+            <div class="field" style="flex:0 1 110px"><label class="label" for="lt-nsb">Small blind</label><input type="number" id="lt-nsb" min="1"></div>
+            <div class="field" style="flex:0 1 110px"><label class="label" for="lt-nbb">Big blind</label><input type="number" id="lt-nbb" min="1"></div>
+            <div class="field" style="flex:0 1 110px"><label class="label" for="lt-nante">Ante</label><input type="number" id="lt-nante" min="0"></div>
+            <button class="small" id="lt-blindsup">Update blinds</button>
+          </div>
+          <div id="lt-chart"></div>
+          <div id="lt-hist"></div>
+          <div class="row" style="align-items:end">
+            <div class="field" style="flex:0 1 110px"><label class="label" for="lt-place">Finished</label><input type="number" id="lt-place" min="1"></div>
+            <div class="field" style="flex:0 1 130px"><label class="label" for="lt-prize">Prize (£)</label><input type="number" id="lt-prize" min="0" step="0.01" value="0"></div>
+            <button id="lt-end">Finish tournament</button><span class="note" id="lt-endmsg"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="lv-hu" style="display:grid;gap:16px">
+    <form class="box" id="lv-setup">
+      <h3>New session</h3>
+      <div class="row">
+        <div class="field"><label class="label" for="lv-me">Your name</label><input id="lv-me" value="" placeholder="Your name" required></div>
+        <div class="field"><label class="label" for="lv-opp">Opponent</label><input id="lv-opp" placeholder="e.g. Sam" required></div>
+      </div>
+      <div class="row">
+        <div class="field"><label class="label" for="lv-sb">Small blind (£)</label><input type="number" id="lv-sb" min="0.01" step="0.01" value="0.10" required></div>
+        <div class="field"><label class="label" for="lv-bb">Big blind (£)</label><input type="number" id="lv-bb" min="0.01" step="0.01" value="0.20" required></div>
+      </div>
+      <div class="row">
+        <div class="field"><label class="label" for="lv-mystack">Your stack (£)</label><input type="number" id="lv-mystack" min="0.01" step="0.01" value="20" required></div>
+        <div class="field"><label class="label" for="lv-oppstack">Their stack (£)</label><input type="number" id="lv-oppstack" min="0.01" step="0.01" value="20" required></div>
+        <div class="field"><label class="label" for="lv-firstbtn">Button first hand</label><select id="lv-firstbtn"><option value="h">Me</option><option value="v">Opponent</option></select></div>
+      </div>
+      <div class="row"><button class="primary" type="submit">Start session</button><span id="lv-setupmsg" class="note"></span></div>
+    </form>
+    <div id="lv-play" hidden style="display:grid;gap:16px">
+      <div class="grid2 prgrid">
+        <div class="box" style="align-content:start">
+          <div class="row" style="justify-content:space-between;align-items:baseline"><h3 id="lv-title">Hand 1</h3><span class="mono muted" id="lv-blinds"></span></div>
+          <div class="ptable pktable hu" id="lv-table"><div class="felt"><div class="pmid"><div class="pm-pot mono" id="lv-midpot"></div><div class="cards pm-board" id="lv-board"></div><div class="pm-total mono note" id="lv-midtotal"></div></div></div></div>
+          <div class="field" style="max-width:170px"><label class="label" for="lv-cards">Your cards</label><input class="mono" id="lv-cards" placeholder="e.g. Ah Kd" autocomplete="off"></div>
+          <div id="lv-actions" style="display:grid;gap:12px"></div>
+        </div>
+        <div class="box" style="align-content:start">
+          <div class="row" style="justify-content:space-between;align-items:center"><h3>Coach</h3><label class="row" style="gap:8px;align-items:center;cursor:pointer"><input type="checkbox" id="lv-coachon" style="width:auto"> On</label></div>
+          <p class="note" style="margin:0">Training mode for games where everyone at the table has agreed to it. Never use it online or in a card room.</p>
+          <div id="lv-coachout"></div>
+        </div>
+      </div>
+      <div class="box">
+        <div class="row" style="justify-content:space-between"><h3>This hand</h3><div class="row"><button class="small" id="lv-undo">Undo</button><button class="small ghost" id="lv-restart">Restart hand</button></div></div>
+        <div id="lv-log" class="hhline" style="display:grid;gap:3px"></div>
+        <div class="field"><label class="label" for="lv-note">Note (optional)</label><input id="lv-note" placeholder="e.g. he always bets small with draws" autocomplete="off"></div>
+      </div>
+      <div class="box">
+        <div class="row" style="justify-content:space-between;align-items:center"><h3>Session</h3><span class="mono" id="lv-sessnet"></span></div>
+        <div class="row">
+          <div class="field" style="flex:0 1 140px"><label class="label" for="lv-topamt">Top up (£)</label><input type="number" id="lv-topamt" min="0.01" step="0.01"></div>
+          <button class="small" id="lv-topme">Add to my stack</button><button class="small" id="lv-topopp">Add to theirs</button>
+        </div>
+        <div id="lv-hist"></div>
+        <div class="row"><button id="lv-end">End session</button><span class="note" id="lv-endmsg"></span></div>
+      </div>
+    </div>
+  </div>
+  </section>
+
+  <!-- HAND REVIEW -->
+  <section class="panel" id="p-review" hidden>
+    <div class="intro">
+      <h2>Hand review</h2>
+      <p class="muted">Write up a hand once it's finished, straight after or at the end of the night, and get the right line explained street by street. Use it between hands only: getting advice during a hand breaks card-room rules and PokerStars' ban on real-time assistance.</p>
+    </div>
+    <div class="grid2">
+      <form class="box" id="hr-form">
+        <h3>The hand</h3>
+        <div class="row">
+          <div class="field"><label class="label" for="hr-game">Game</label><select id="hr-game"><option>Live tournament</option><option>Online tournament</option><option>Home game</option><option>Cash game</option></select></div>
+          <div class="field"><label class="label" for="hr-players">Players at table</label><input type="number" id="hr-players" min="2" max="10" value="9"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label class="label" for="hr-pos">Your position</label><select id="hr-pos"><option>UTG</option><option>UTG+1</option><option>UTG+2</option><option>LJ</option><option>HJ</option><option>CO</option><option selected>BTN</option><option>SB</option><option>BB</option></select></div>
+          <div class="field"><label class="label" for="hr-stack">Your stack (BB)</label><input type="number" id="hr-stack" min="0" step="0.5" placeholder="e.g. 25"></div>
+          <div class="field"><label class="label" for="hr-cards">Your cards</label><input class="mono" id="hr-cards" placeholder="e.g. Th Tc"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label class="label" for="hr-blinds">Blinds</label><input id="hr-blinds" placeholder="e.g. 200/400, ante 50"></div>
+          <div class="field"><label class="label" for="hr-stage">Tournament stage</label><input id="hr-stage" placeholder="e.g. 14 left, 9 paid"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label class="label" for="hr-vpos">Main opponent's position</label><select id="hr-vpos"><option value="">Not sure</option><option>UTG</option><option>UTG+1</option><option>UTG+2</option><option>LJ</option><option>HJ</option><option>CO</option><option>BTN</option><option>SB</option><option>BB</option></select></div>
+          <div class="field"><label class="label" for="hr-vstack">Their stack (BB)</label><input type="number" id="hr-vstack" min="0" step="0.5"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label class="label" for="hr-flop">Flop</label><input class="mono" id="hr-flop" placeholder="Qh 7c 2d"></div>
+          <div class="field"><label class="label" for="hr-turn">Turn</label><input class="mono" id="hr-turn" placeholder="9s"></div>
+          <div class="field"><label class="label" for="hr-river">River</label><input class="mono" id="hr-river" placeholder="Qd"></div>
+        </div>
+        <div class="field"><label class="label" for="hr-a-pre">Preflop action</label><textarea id="hr-a-pre" placeholder="e.g. Folds to me, I limp. BB checks."></textarea></div>
+        <div class="field"><label class="label" for="hr-a-flop">Flop action</label><textarea id="hr-a-flop" placeholder="e.g. Checked around."></textarea></div>
+        <div class="field"><label class="label" for="hr-a-turn">Turn action</label><textarea id="hr-a-turn"></textarea></div>
+        <div class="field"><label class="label" for="hr-a-river">River action</label><textarea id="hr-a-river"></textarea></div>
+        <div class="field"><label class="label" for="hr-read">Read on opponent</label><input id="hr-read" placeholder="e.g. Loose, calls a lot, first time at the table"></div>
+        <div class="row">
+          <div class="field"><label class="label" for="hr-result">Result</label><select id="hr-result"><option>I won</option><option>I lost</option><option>I folded</option><option>Still thinking about it</option></select></div>
+        </div>
+        <div class="field"><label class="label" for="hr-q">What were you unsure about?</label><textarea id="hr-q" placeholder="e.g. Should I have just shoved preflop?"></textarea></div>
+        <div class="row">
+          <button class="primary" type="submit" id="hr-reviewbtn">Save and review</button>
+          <button type="button" id="hr-savebtn">Save only</button>
+          <span class="note" id="hr-msg"></span>
+        </div>
+      </form>
+      <div class="box" style="align-content:start">
+        <div class="row" style="justify-content:space-between"><h3>Coach's review</h3><button class="small ghost" id="hr-stop" hidden>Stop</button></div>
+        <div class="md" id="hr-out"><p class="note">Fill in what you remember and choose Save and review. Rough notes are fine. The review covers each street, the key idea and one thing to take into your next session.</p></div>
+      </div>
+    </div>
+    <div class="box">
+      <h3>Saved hands</h3>
+      <div id="hr-list"></div>
+    </div>
+  </section>
+
+  <!-- LESSONS -->
+  <section class="panel" id="p-lessons" hidden>
+    <div class="intro">
+      <h2>Your lessons</h2>
+      <p class="muted">Lessons built from your own hands. Each one takes a leak from your stats, teaches the idea behind it, then quizzes you on real spots you played. Rebuild them after you import more hands.</p>
+    </div>
+    <div class="box">
+      <div class="row" style="justify-content:space-between">
+        <span class="mono muted" id="ls-progress"></span>
+        <div class="row"><div class="row" role="group" aria-label="Build lessons from" style="gap:4px"><span class="label" style="align-self:center">From</span><button class="small" data-lss="real">Real hands</button><button class="small" data-lss="practice">Practice hands</button><button class="small" data-lss="both">Both</button></div><button class="small ghost" id="ls-stop" hidden>Stop</button><button class="primary" id="ls-build">Build my lessons</button></div>
+      </div>
+      <span id="ls-msg" role="status" aria-live="polite" style="font-weight:600;font-size:14px"></span>
+    </div>
+    <div class="grid2" id="ls-summary" hidden>
+      <div class="box"><h3>Strengths</h3><ul class="plain" id="ls-str"></ul></div>
+      <div class="box"><h3>Weaknesses</h3><ul class="plain" id="ls-weak"></ul></div>
+    </div>
+    <div id="ls-list" style="display:grid;gap:20px"></div>
+  </section>
+
+  <!-- POKERSTARS TRACKER -->
+  <section class="panel" id="p-stars" hidden>
+    <div class="intro">
+      <h2>PokerStars tracker</h2>
+      <p class="muted">PokerStars saves every hand you play as a text file on your computer. Drop those files in after each session and this builds your stats, finds your leaks and lets you review your biggest losing hands.</p>
+    </div>
+    <div class="grid2">
+      <div class="box">
+        <h3>Import hands</h3>
+        <label class="drop" id="ps-drop" for="ps-file">
+          <span><b>Choose hand history files</b> or drop them here</span>
+          <span class="note">.txt files from PokerStars, or the .zip GGPoker gives you from PokerCraft. Hands you've already imported are skipped.</span>
+        </label>
+        <input type="file" id="ps-file" accept=".txt,.zip,text/plain,application/zip" multiple hidden>
+        <div class="field"><label class="label" for="ps-paste">Or paste hand histories</label><textarea id="ps-paste" class="mono" style="min-height:90px;font-size:12px" placeholder="PokerStars Hand #123456789012: Tournament #1234567890…"></textarea></div>
+        <div class="row"><button id="ps-pastebtn">Import pasted hands</button></div>
+        <div class="field">
+          <span class="label">Or upload screenshots</span>
+          <label class="drop" id="ps-imgdrop" for="ps-img">
+            <span><b>Choose screenshots</b> of Instant Hand History or drop them here</span>
+            <span class="note">Screenshots showing the full hand text give full stats. Stretch the panel tall so the whole hand fits, or take a few screenshots scrolling down. Screenshots of just the hand list only record your cards and who won.</span>
+          </label>
+          <input type="file" id="ps-img" accept="image/*" multiple hidden>
+        </div>
+        <p class="note">Tip: press <b>Cmd+Ctrl+Shift+4</b> to copy a screenshot, then click this page and press <b>Cmd+V</b>.</p>
+        <div class="field"><label class="label" for="ps-name">Your PokerStars screen name</label><input id="ps-name" placeholder="As shown in PokerStars"></div>
+        <span id="ps-msg" role="status" aria-live="polite" style="font-weight:600;font-size:14px"></span>
+      </div>
+      <div class="box">
+        <h3>Finding the files</h3>
+        <ul class="plain">
+          <li>In PokerStars, open <b>Settings</b>, then <b>Playing History</b>, then <b>Hand History</b>. Make sure saving hand histories is turned on and note the folder it shows.</li>
+          <li>Each table or tournament gets its own file. Import the new ones after every session.</li>
+          <li>Tournament hands are measured in big blinds, so results stay comparable as blinds go up.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="row">
+      <div class="field" style="max-width:220px"><label class="label" for="ps-game">Show</label><select id="ps-game"><option value="all">All hands</option><option value="T">Tournaments</option><option value="C">Cash games</option></select></div>
+    </div>
+    <div class="box stats" id="ps-stats"></div>
+    <p class="note" id="ps-litenote" hidden></p>
+    <div class="box">
+      <h3>Leak finder</h3>
+      <div id="ps-leaks" style="display:grid;gap:10px"></div>
+    </div>
+    <div class="grid2">
+      <div class="box"><h3>By position</h3><div class="tablewrap"><table id="ps-pos"></table></div></div>
+      <div class="box"><h3>By stack size</h3><div class="tablewrap"><table id="ps-depth"></table></div><p class="note">Under 15 BB, most hands should be shove or fold preflop.</p></div>
+    </div>
+    <div class="box">
+      <div class="row" style="justify-content:space-between"><h3>Coach's analysis of your game</h3><div class="row"><button class="small ghost" id="ps-stop" hidden>Stop</button><button class="primary" id="ps-analyse">Analyse my game</button></div></div>
+      <div class="md" id="ps-out"><p class="note">Once you've imported some hands, this reads your stats and biggest losing hands and tells you what to fix first.</p></div>
+    </div>
+    <div class="box">
+      <h3>Biggest losing hands</h3>
+      <div id="ps-losses"></div>
+    </div>
+    <div class="box">
+      <h3>Imports</h3>
+      <div id="ps-imports"></div>
+    </div>
+  </section>
+
+  <!-- PRACTICE -->
+  <section class="panel" id="p-practice">
+    <div class="intro">
+      <h2>Practice hands</h2>
+      <p class="muted">Play random hands against computer players with different styles: some tight, some loose, some aggressive. After every decision you'll see how often a strong player takes each option, and whether your choice was the best play, a fine mixed play or a mistake.</p>
+    </div>
+    <div class="row" style="justify-content:space-between;align-items:center">
+      <div class="row" role="group" aria-label="Table size" style="gap:4px"><span class="label" style="align-self:center">Table</span><button class="small" data-prn="9">9</button><button class="small" data-prn="8">8</button><button class="small" data-prn="7">7</button><button class="small" data-prn="6">6</button><button class="small" data-prn="5">5</button><button class="small" data-prn="4">4</button><button class="small" data-prn="3">3</button><button class="small" data-prn="2">Heads-up</button></div>
+      <span class="mono muted" id="pr-score"></span>
+    </div>
+    <div class="grid2 prgrid">
+      <div class="box" style="align-content:start">
+        <div class="row" style="justify-content:space-between;align-items:baseline"><h3 id="pr-title">Hand</h3><span class="mono muted" id="pr-stacks"></span></div>
+        <p id="pr-spot" style="margin:0"></p>
+        <div class="ptable pktable" id="pr-table"><div class="felt"><div class="pmid"><div id="pr-mid-pot" class="pm-pot mono"></div><div class="cards pm-board" id="pr-mid-board"></div><div id="pr-mid-total" class="pm-total mono note"></div></div></div></div>
+        <div id="pr-ask" style="font-weight:600"></div>
+        <div class="row" id="pr-opts"></div>
+        <div id="pr-end"></div>
+      </div>
+      <div class="box" style="align-content:start">
+        <h3>Feedback</h3>
+        <div id="pr-fb"><p class="note">Make your first decision to see feedback.</p></div>
+      </div>
+    </div>
+    <div class="box">
+      <h3>This hand</h3>
+      <div id="pr-log" style="display:grid;gap:10px"></div>
+    </div>
+    <div class="box">
+      <div class="row" style="justify-content:space-between;align-items:center">
+        <h3>Your practice record</h3>
+        <div class="row"><button class="small primary" id="prr-analyse">Analyse my practice</button><button class="small" id="prr-lessons">Build lessons from practice</button><button class="small ghost" id="prr-clear">Clear history</button></div>
+      </div>
+      <div class="md" id="prr-out"></div>
+      <div id="prr-body"></div>
+    </div>
+  </section>
+
+  <!-- EQUITY -->
+  <section class="panel" id="p-equity" hidden>
+    <div class="intro">
+      <h2>Equity calculator</h2>
+      <p class="muted">Enter cards like <span class="mono">As Kd</span> or <span class="mono">7h 8h 2c</span>. Leave the villain blank to play against random hands. Use it to replay spots from your tournaments.</p>
+    </div>
+    <div class="grid2">
+      <div class="box">
+        <div class="field"><label class="label" for="e-hero">Your hand</label><input class="mono" id="e-hero" value="Ah Kh"></div>
+        <div class="field"><label class="label" for="e-vill">Villain's hand (optional)</label><input class="mono" id="e-vill" value="Qs Qd"></div>
+        <div class="field"><label class="label" for="e-board">Board (0, 3, 4 or 5 cards)</label><input class="mono" id="e-board" value="Jh 7h 2c"></div>
+        <div class="field"><label class="label" for="e-opps">Random opponents (used when villain is blank)</label>
+          <select id="e-opps"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>8</option></select></div>
+        <div class="row"><button class="primary" id="e-run">Calculate</button><span class="note" id="e-err"></span></div>
+      </div>
+      <div class="box">
+        <div class="row" style="gap:18px">
+          <div class="field"><span class="label">You</span><div class="cards" id="e-c-hero"></div></div>
+          <div class="field"><span class="label">Board</span><div class="cards" id="e-c-board"></div></div>
+        </div>
+        <div class="stats">
+          <div class="stat"><span class="label">Your equity</span><span class="v" id="e-eq">–</span></div>
+          <div class="stat"><span class="label">Win</span><span class="v" id="e-win">–</span></div>
+          <div class="stat"><span class="label">Tie</span><span class="v" id="e-tie">–</span></div>
+        </div>
+        <div class="bar" aria-hidden="true"><span id="e-bar-w" style="background:var(--accent);width:0"></span><span id="e-bar-t" style="background:var(--gold);width:0"></span></div>
+        <p class="note" id="e-meta">Monte Carlo, 30,000 deals.</p>
+        <div>
+          <span class="label">What you end up with by the river</span>
+          <div class="tablewrap"><table id="e-dist"></table></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- THEORY -->
+  <section class="panel" id="p-theory" hidden>
+    <div class="intro">
+      <h2>Bet sizing theory</h2>
+      <p class="muted">Game theory starts from one idea: every bet size sets a price. That price tells you how often to defend, how often to bluff, and how often a bluff has to work.</p>
+    </div>
+    <div class="box">
+      <div class="field">
+        <label class="label" for="t-size">Bet size: <span class="mono" id="t-sizeval">75%</span> of the pot</label>
+        <div class="range"><input type="range" id="t-size" min="10" max="300" step="5" value="75"></div>
+      </div>
+      <div class="stats" id="t-stats"></div>
+    </div>
+    <div class="grid2">
+      <div class="box">
+        <h3>What each number means</h3>
+        <ul class="plain">
+          <li><b>Equity to call:</b> your hand must win at least this often to call profitably.</li>
+          <li><b>Minimum defence frequency (MDF):</b> if you fold more than 1 − MDF of your range, any two cards can bluff you profitably.</li>
+          <li><b>Bluff success needed:</b> a pure bluff breaks even when villain folds this often.</li>
+          <li><b>Bluffs in a balanced river bet:</b> the share of your betting range that can be bluffs so villain can't exploit you either way.</li>
+        </ul>
+      </div>
+      <div class="box">
+        <h3>Using it against friends and live fields</h3>
+        <ul class="plain">
+          <li>Balanced play is the baseline. Most home and live low-stakes players under-bluff big bets, so fold more than MDF against them on the river.</li>
+          <li>Players who call too much make bluffing a losing play. Bet bigger for value instead.</li>
+          <li>Online regulars are closer to balanced, so stick nearer to these numbers.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="box">
+      <h3>Common sizes</h3>
+      <div class="tablewrap"><table id="t-table"></table></div>
+    </div>
+  </section>
+
+  <!-- HANDS -->
+  <section class="panel" id="p-hands" hidden>
+    <div class="intro">
+      <h2>Starting hand equity</h2>
+      <p class="muted">Preflop all-in equity of every starting hand against random hands. Suited above the diagonal, offsuit below, pairs along it. Watch how suited connectors lose value and high cards hold up as the table gets bigger.</p>
+    </div>
+    <div class="box">
+      <div class="row">
+        <div class="field" style="max-width:220px"><label class="label" for="h-opps">Against</label>
+          <select id="h-opps"><option value="1">1 random hand</option><option value="2">2 random hands</option><option value="4">4 random hands</option></select></div>
+        <span class="note" id="h-status"></span>
+      </div>
+      <div class="heat" id="h-grid"></div>
+      <p class="note">Simulated with 1,500 deals per hand, so values move by about ±1%.</p>
+    </div>
+  </section>
+
+  <!-- ICM -->
+  <section class="panel" id="p-icm" hidden>
+    <div class="intro">
+      <h2>ICM calculator</h2>
+      <p class="muted">In a tournament, chips aren't money. The Independent Chip Model converts stacks into prize equity, which is why you need a stronger hand to call off near the bubble or at a final table.</p>
+    </div>
+    <div class="grid2">
+      <div class="box">
+        <div class="field"><label class="label" for="i-stacks">Stacks (one per player, comma separated)</label><input class="mono" id="i-stacks" value="18000, 12500, 9000, 6000, 3500"></div>
+        <div class="field"><label class="label" for="i-pay">Payouts in £ (1st, 2nd, …)</label><input class="mono" id="i-pay" value="250, 150, 100"></div>
+        <div class="row">
+          <div class="field"><label class="label" for="i-hero">You are player</label><select id="i-hero"></select></div>
+          <div class="field"><label class="label" for="i-vill">Shoving player</label><select id="i-vill"></select></div>
+        </div>
+        <button class="primary" id="i-run">Calculate</button>
+        <span class="note" id="i-err"></span>
+      </div>
+      <div class="box">
+        <h3>Should you call the shove?</h3>
+        <div class="stats">
+          <div class="stat"><span class="label">Equity needed (ICM)</span><span class="v" id="i-req">–</span></div>
+          <div class="stat"><span class="label">In a cash game</span><span class="v">50.0%</span></div>
+          <div class="stat"><span class="label">Risk premium</span><span class="v" id="i-prem">–</span></div>
+        </div>
+        <p class="note" id="i-explain"></p>
+        <p class="note">Ignores blinds and antes already in the pot, which lower the number a little.</p>
+      </div>
+    </div>
+    <div class="box">
+      <h3>Prize equity by stack</h3>
+      <div class="tablewrap"><table id="i-table"></table></div>
+    </div>
+  </section>
+
+  <!-- RESULTS -->
+  <section class="panel" id="p-results" hidden>
+    <div class="intro">
+      <h2>Tournament results</h2>
+      <p class="muted">Log every event, live and online. Over a few months this shows your real ROI and where you win.</p>
+    </div>
+    <div class="banner" id="r-banner" hidden>Your browser is blocking local storage, so results can't be saved. Allow site data for this page (or leave private browsing) to keep them.</div>
+    <div class="stats box" id="r-stats"></div>
+    <div class="box">
+      <div class="row" style="justify-content:space-between"><h3>Profit over time</h3><span class="note">£, cumulative</span></div>
+      <div id="r-chart"></div>
+    </div>
+    <div class="grid2">
+      <form class="box" id="r-form">
+        <h3>Add a result</h3>
+        <div class="row">
+          <div class="field"><label class="label" for="r-date">Date</label><input type="date" id="r-date" required></div>
+          <div class="field"><label class="label" for="r-fmt">Format</label><select id="r-fmt"><option>Live</option><option>Online</option><option>Home game</option></select></div>
+        </div>
+        <div class="field"><label class="label" for="r-name">Event</label><input id="r-name" placeholder="e.g. Tuesday £30 freezeout" required></div>
+        <div class="row">
+          <div class="field"><label class="label" for="r-buy">Buy-in incl. rebuys (£)</label><input type="number" id="r-buy" min="0" step="0.01" required></div>
+          <div class="field"><label class="label" for="r-prize">Won (£)</label><input type="number" id="r-prize" min="0" step="0.01" value="0"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label class="label" for="r-entries">Entrants</label><input type="number" id="r-entries" min="1"></div>
+          <div class="field"><label class="label" for="r-finish">Finished</label><input type="number" id="r-finish" min="1"></div>
+        </div>
+        <div class="field"><label class="label" for="r-notes">Key hand or lesson</label><textarea id="r-notes" placeholder="e.g. Called off 20bb with AJo on the bubble, 7 left, 5 paid. Check it in ICM."></textarea></div>
+        <div class="row"><button class="primary" type="submit" id="r-add">Save result</button><span class="note" id="r-msg"></span></div>
+      </form>
+      <div class="box">
+        <h3>Weekly routine</h3>
+        <ul class="plain">
+          <li><b>Before each session:</b> play 20 Practice hands. Aim for 80% best or fine decisions before you sit down.</li>
+          <li><b>After each tournament:</b> log it here with one hand you weren't sure about. Replay it in Equity or ICM.</li>
+          <li><b>Before a live event:</b> run two or three bubble spots through ICM with that event's payouts.</li>
+          <li><b>Once a week:</b> compare ROI live vs online and put more volume where you're winning.</li>
+        </ul>
+        <p class="note">You need 50–100 events before ROI means much. Tournament results swing hard.</p>
+      </div>
+    </div>
+    <div class="box">
+      <h3>History</h3>
+      <div id="r-list"></div>
+    </div>
+  </section>
+
+
+  <!-- COACH CHAT -->
+  <section class="panel" id="p-coach" hidden>
+    <div class="intro">
+      <h2>Ask the coach</h2>
+      <p class="muted">Talk through a hand, a range or a tournament spot. The coach doesn't guess the numbers: it runs the equity calculator, the range charts and the ICM maths for you, and shows you what it ran.</p>
+    </div>
+    <div class="chat box">
+      <div class="aistatus"><span id="ai-status" role="status" aria-live="polite">Checking the coach…</span>
+        <div class="row" id="ai-code-box" hidden>
+          <div class="field" style="flex:1 1 180px"><label class="label" for="ai-code">Access code</label><input id="ai-code" type="password" autocomplete="off" placeholder="Optional"></div>
+          <button class="small" id="ai-code-save">Use code</button><span class="note" id="ai-code-msg" role="status"></span>
+        </div>
+      </div>
+      <div class="chatlog" id="chat-log" aria-live="polite" aria-label="Conversation"></div>
+      <div class="starters" id="chat-starters"></div>
+      <form class="chatform" id="chat-form">
+        <label class="label" for="chat-input">Your message</label>
+        <textarea id="chat-input" rows="2" maxlength="6000" placeholder="e.g. I'm on the button, 25 BB, 9-handed. UTG opens, I hold AJo. Call or fold?"></textarea>
+        <div class="row"><button class="primary" type="submit" id="chat-send">Send</button><button type="button" id="chat-stop" hidden>Stop</button><button type="button" class="ghost" id="chat-new">New chat</button><span class="note" id="chat-msg" role="status"></span></div>
+      </form>
+      <p class="note">For finished hands and study only. Don't use it for advice during a hand: card rooms and online sites ban real-time assistance.</p>
+    </div>
+  </section>
+
+  <!-- BACKUP -->
+  <section class="panel" id="p-data" hidden>
+    <div class="intro">
+      <h2>Your data</h2>
+      <p class="muted">Poker Lab keeps everything in this browser: results, hands, imports, practice and lessons. Nothing is uploaded to an account. Download a backup so you can move to a new device or recover from cleared browser data.</p>
+    </div>
+    <div class="grid2">
+      <div class="box" style="align-content:start">
+        <h3>Back up</h3>
+        <p class="note" id="data-summary"></p>
+        <div class="row"><button class="primary" id="data-export">Download backup (.json)</button></div>
+      </div>
+      <div class="box" style="align-content:start">
+        <h3>Restore</h3>
+        <div class="field"><label class="label" for="data-file">Backup file</label><input type="file" id="data-file" accept="application/json,.json"></div>
+        <div class="row"><button id="data-merge">Add to what's here</button><button class="ghost" id="data-replace">Replace everything</button></div>
+        <span class="note" id="data-msg" role="status" aria-live="polite"></span>
+      </div>
+    </div>
+  </section>
+</div>
+<script type="module" src="/src/main.ts"></script>
+</body>
+</html>
