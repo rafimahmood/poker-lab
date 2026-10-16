@@ -9,13 +9,13 @@ test('coach chat streams an answer and shows the tool it ran', async ({ page }) 
   await page.locator('#chat-input').fill('AKs vs QQ?');
   await page.locator('#chat-send').click();
   await expect(page.locator('.toolchip')).toContainText('Equity AhKh vs QsQd → 46%');
-  await expect(page.locator('.msg.coach')).toContainText('The calculator gives 46%, so it is a coin flip.');
+  await expect(page.locator('.msg.bot')).toContainText('The calculator gives 46%, so it is a coin flip.');
   await expect(page.locator('#ai-status')).toContainText('4 free messages left');
   await expect(page.locator('.msg.user')).toContainText('AKs vs QQ?');
   expect(errors).toEqual([]);
   // history survives reload; New chat clears it
   await page.reload();
-  await expect(page.locator('.msg.coach')).toContainText('coin flip');
+  await expect(page.locator('.msg.bot')).toContainText('coin flip');
   await page.locator('#chat-new').click();
   await expect(page.locator('.msg')).toHaveCount(0);
 });
@@ -24,7 +24,7 @@ test('starter prompts send a message', async ({ page }) => {
   await mockApi(page);
   await page.goto('/#coach');
   await page.locator('.chip').first().click();
-  await expect(page.locator('.msg.coach')).toContainText('coin flip');
+  await expect(page.locator('.msg.bot')).toContainText('coin flip');
 });
 
 test('shows the free-limit message when rate limited', async ({ page }) => {
@@ -32,7 +32,7 @@ test('shows the free-limit message when rate limited', async ({ page }) => {
   await page.goto('/#coach');
   await page.locator('#chat-input').fill('hello');
   await page.locator('#chat-send').click();
-  await expect(page.locator('.msg.coach.err')).toContainText('5 free coach messages');
+  await expect(page.locator('.msg.bot.err')).toContainText('5 free coach messages');
   await expect(page.locator('#chat-send')).toBeEnabled();
 });
 

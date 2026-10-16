@@ -23,6 +23,21 @@ const GROUPS = [
 const TABS: string[] = GROUPS.flatMap((g) => g.tabs.map((t) => t[0]));
 const groupOf = (t: string) => GROUPS.find((g) => g.tabs.some((x) => x[0] === t)) ?? GROUPS[0];
 
+function initTheme() {
+  const root = document.documentElement;
+  const saved = ls.raw('pl-theme');
+  if (saved === 'light' || saved === 'dark') root.dataset.theme = saved;
+  const current = () => root.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  const paint = () => { $('theme-label').textContent = current() === 'dark' ? 'Light' : 'Dark'; };
+  $('theme-toggle').addEventListener('click', () => {
+    const next = current() === 'dark' ? 'light' : 'dark';
+    root.dataset.theme = next;
+    ls.setRaw('pl-theme', next);
+    paint();
+  });
+  paint();
+}
+
 let lastSub = ls.get<Record<string, string>>('pl-sub', {});
 let heatStarted = false;
 
@@ -51,6 +66,7 @@ const goTab = (t: string) => { showTab(t); try { history.replaceState(null, '', 
 
 async function boot() {
   await store.init();
+  initTheme();
   if (import.meta.env.DEV) (window as unknown as { __store: typeof store }).__store = store; // for screenshot/e2e seeding
   initTools();
   initResults();

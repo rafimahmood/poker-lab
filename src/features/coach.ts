@@ -23,7 +23,7 @@ function save() { ls.set(KEY, turns.slice(-30).map(({ role, content, tools }) =>
 
 function bubble(t: Turn, streaming = false): string {
   if (t.role === 'user') return `<div class="msg user"><span class="who">You</span><div>${esc(t.content).replace(/\n/g, '<br>')}</div></div>`;
-  return `<div class="msg coach${t.error ? ' err' : ''}"><span class="who">Coach</span><div class="md">${chips(t.tools || [])}${t.content ? md(t.content) : streaming ? '<p class="note">Thinking…</p>' : ''}</div></div>`;
+  return `<div class="msg bot${t.error ? ' err' : ''}"><span class="who">Coach</span><div class="md">${chips(t.tools || [])}${t.content ? md(t.content) : streaming ? '<p class="note">Thinking…</p>' : ''}</div></div>`;
 }
 
 function render(streaming = false) {

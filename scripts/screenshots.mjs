@@ -52,7 +52,7 @@ async function seed(page) {
   await page.goto(BASE + '/#coach');
   await page.locator('#chat-input').fill('I have AJo on the button, 25 BB, UTG opens to 2.5 BB. Call or fold?');
   await page.locator('#chat-send').click();
-  await page.waitForSelector('.msg.coach .md h3');
+  await page.waitForSelector('.msg.bot .md h3');
 }
 
 const browser = await chromium.launch(process.env.CI ? {} : { channel: 'chrome' });

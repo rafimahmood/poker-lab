@@ -13,7 +13,7 @@ export function drawTable(T: HTMLElement, seats: TableSeat[], anchor: number, mi
   const N = seats.length;
   seats.forEach((s, i) => {
     const rel = (i - anchor + N) % N, th = ((90 + (rel * 360) / N) * Math.PI) / 180;
-    const cx = 50 + 46 * Math.cos(th), cy = 50 + 47 * Math.sin(th);
+    const cx = 50 + 40 * Math.cos(th), cy = 50 + 45 * Math.sin(th);
     const el = document.createElement(s.onClick ? 'button' : 'div');
     if (s.onClick) { (el as HTMLButtonElement).type = 'button'; el.addEventListener('click', s.onClick); el.setAttribute('aria-pressed', String(!!s.sel)); }
     el.className = 'pseat' + (s.me ? ' me' : '') + (s.out ? ' folded' : '') + (s.hl ? ' villain' : '') + (s.sel ? ' sel' : '');
@@ -26,13 +26,13 @@ export function drawTable(T: HTMLElement, seats: TableSeat[], anchor: number, mi
       const b = document.createElement('div');
       b.className = 'pbet mono';
       b.innerHTML = '<i></i>' + esc(s.bet);
-      b.style.left = 50 + 30 * Math.cos(th) + '%'; b.style.top = 50 + 27 * Math.sin(th) + '%';
+      b.style.left = 50 + 26 * Math.cos(th) + '%'; b.style.top = 50 + 26 * Math.sin(th) + '%';
       T.appendChild(b);
     }
     if (s.dealer) {
       const d = document.createElement('div');
       d.className = 'pdealer'; d.textContent = 'D'; d.setAttribute('aria-label', 'Dealer button');
-      d.style.left = 50 + 33 * Math.cos(th + 0.28) + '%'; d.style.top = 50 + 31 * Math.sin(th + 0.28) + '%';
+      d.style.left = 50 + 29 * Math.cos(th + 0.3) + '%'; d.style.top = 50 + 30 * Math.sin(th + 0.3) + '%';
       T.appendChild(d);
     }
   });
