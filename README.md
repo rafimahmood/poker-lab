@@ -2,7 +2,7 @@
 
 An AI poker coach for Texas Hold'em tournament players. It analyses your hands, builds personalised lessons and teaches preflop ranges, so the maths becomes automatic at the table.
 
-**Live demo:** _add your Netlify link here_
+**Live demo:** https://pokerlab12.netlify.app
 
 ## What it does
 
